@@ -70,11 +70,11 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
     val nonce = requestObject.getString("nonce") ?: ""
     val serverClientId = requestObject.getString("serverClientId") ?: ""
     val autoSelectEnabled = requestObject.getBoolean("autoSelectEnabled") ?: false
-//    val filterByAuthorizedAccounts = requestObject.getBoolean("filterByAuthorizedAccounts") ?: false
+    val filterByAuthorizedAccounts = requestObject.getBoolean("filterByAuthorizedAccounts") ?: false
 
     val googleIdOption = GetGoogleIdOption
       .Builder()
-      .setFilterByAuthorizedAccounts(false)
+      .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts)
       .setServerClientId(serverClientId)
       .setAutoSelectEnabled(autoSelectEnabled)
       .setNonce(nonce)

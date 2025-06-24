@@ -12,7 +12,7 @@ export default function App() {
             serverClientId:
               '882363291751-2a37cchrq9oc1lfj1p419otvahnbhguv.apps.googleusercontent.com',
             autoSelectEnabled: false,
-            filterByAuthorizedAccounts: true,
+            filterByAuthorizedAccounts: false,
           })
             .then((credential) => {
               console.log(credential);
