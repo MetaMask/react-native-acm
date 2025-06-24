@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "react-native-google-acm": ["./src/index"]
+      "@metamask/react-native-acm": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

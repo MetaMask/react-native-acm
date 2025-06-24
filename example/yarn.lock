@@ -1318,6 +1318,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@metamask/react-native-acm@file:..":
+  version "0.1.0"
+  resolved "file:.."
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz"
@@ -4576,10 +4580,6 @@ react-native-builder-bob@^0.38.4:
     prompts "^2.4.2"
     which "^2.0.2"
     yargs "^17.5.1"
-
-"react-native-google-acm@file:..":
-  version "0.1.0"
-  resolved "file:.."
 
 react-native@*, react-native@0.78.2:
   version "0.78.2"

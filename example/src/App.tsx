@@ -1,4 +1,4 @@
-import { signInWithGoogle, signOut } from 'react-native-google-acm';
+import { signInWithGoogle, signOut } from '@metamask/react-native-acm';
 import { View, StyleSheet, Button } from 'react-native';
 
 export default function App() {

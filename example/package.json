@@ -1,5 +1,5 @@
 {
-  "name": "react-native-google-acm-example",
+  "name": "@metamask/react-native-acm-example",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -12,7 +12,7 @@
   "dependencies": {
     "react": "19.0.0",
     "react-native": "0.78.2",
-    "react-native-google-acm": "file:.."
+    "@metamask/react-native-acm": "file:.."
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

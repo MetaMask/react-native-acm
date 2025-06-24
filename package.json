@@ -1,5 +1,5 @@
 {
-  "name": "react-native-google-acm",
+  "name": "@metamask/react-native-acm",
   "version": "0.1.0",
   "description": "Google ACM for react-native",
   "source": "./src/index.tsx",
@@ -32,7 +32,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace react-native-google-acm-example",
+    "example": "yarn workspace @metamask/react-native-acm-example",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
@@ -47,14 +47,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ieow/react-native-google-acm.git"
+    "url": "git+https://github.com/MetaMask/react-native-acm.git"
   },
   "author": "ieow <cwlee0@gmail.com> (https://github.com/ieow)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ieow/react-native-google-acm/issues"
+    "url": "https://github.com/MetaMask/react-native-acm/issues"
   },
-  "homepage": "https://github.com/ieow/react-native-google-acm#readme",
+  "homepage": "https://github.com/MetaMask/react-native-acm#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
