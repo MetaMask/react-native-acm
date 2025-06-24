@@ -4,15 +4,13 @@ Google ACM for react-native
 
 ## Installation
 
-```sh
-npm install react-native-google-acm
-```
+Coming soon.
 
 ## Usage
 
 
 ```js
-import { signInWithGoogle } from 'react-native-google-acm';
+import { signInWithGoogle } from '@metamask/....';
 
 // ...
 export default function App() {
