@@ -32,12 +32,16 @@
     "!**/.*"
   ],
   "scripts": {
+    "lint:changelog": "auto-changelog validate --prettier",
+    "lint:constraints": "yarn constraints",
+    "lint:dependencies": "depcheck && yarn dedupe",
     "example": "yarn workspace @metamask/react-native-acm-example",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",
+    "build": "yarn prepare",
     "release": "release-it"
   },
   "keywords": [
