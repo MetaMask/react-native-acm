@@ -1,4 +1,4 @@
-import { signInWithGoogle, signOut } from 'react-native-google-acm';
+import { signInWithGoogle, signOut } from '@metamask/react-native-acm';
 import { View, StyleSheet, Button } from 'react-native';
 
 export default function App() {
@@ -12,7 +12,7 @@ export default function App() {
             serverClientId:
               '882363291751-2a37cchrq9oc1lfj1p419otvahnbhguv.apps.googleusercontent.com',
             autoSelectEnabled: false,
-            filterByAuthorizedAccounts: true,
+            filterByAuthorizedAccounts: false,
           })
             .then((credential) => {
               console.log(credential);

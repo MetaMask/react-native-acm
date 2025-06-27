@@ -1,5 +1,5 @@
 {
-  "name": "react-native-google-acm",
+  "name": "@metamask/react-native-acm",
   "version": "0.1.0",
   "description": "Google ACM for react-native",
   "source": "./src/index.tsx",
@@ -32,7 +32,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace react-native-google-acm-example",
+    "example": "yarn workspace @metamask/react-native-acm-example",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
@@ -47,14 +47,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ieow/react-native-google-acm.git"
+    "url": "git+https://github.com/MetaMask/react-native-acm.git"
   },
   "author": "ieow <cwlee0@gmail.com> (https://github.com/ieow)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ieow/react-native-google-acm/issues"
+    "url": "https://github.com/MetaMask/react-native-acm/issues"
   },
-  "homepage": "https://github.com/ieow/react-native-google-acm#readme",
+  "homepage": "https://github.com/MetaMask/react-native-acm#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
@@ -64,15 +64,21 @@
     "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.22.0",
     "@evilmartians/lefthook": "^1.5.0",
+    "@react-native-community/cli": "^18.0.0",
     "@react-native/eslint-config": "^0.78.0",
     "@release-it/conventional-changelog": "^9.0.2",
     "@types/jest": "^29.5.5",
     "@types/react": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.35.0",
     "commitlint": "^19.6.1",
     "del-cli": "^5.1.0",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-ft-flow": "^3.0.11",
+    "eslint-plugin-jest": "^29.0.1",
     "eslint-plugin-prettier": "^5.2.3",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-native": "^5.0.0",
     "jest": "^29.7.0",
     "prettier": "^3.0.3",
     "react": "19.0.0",

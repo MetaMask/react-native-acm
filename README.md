@@ -1,4 +1,4 @@
-# react-native-google-acm
+# @metamask/react-native-acm
 
 Google ACM for react-native
 
