@@ -14,11 +14,12 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Checkout and setup environment
+        uses: MetaMask/action-checkout-and-setup@v1
+        with:
+          is-high-risk-environment: false
+          node-version: ${{ matrix.node-version }}
+          cache-node-modules: ${{ matrix.node-version == '22.x' }}
 
       - name: Lint files
         run: yarn lint
@@ -29,11 +30,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Checkout and setup environment
+        uses: MetaMask/action-checkout-and-setup@v1
+        with:
+          is-high-risk-environment: false
+          node-version: ${{ matrix.node-version }}
+          cache-node-modules: ${{ matrix.node-version == '22.x' }}
 
       - name: Run unit tests
         run: yarn test --maxWorkers=2 --coverage
@@ -41,11 +43,12 @@ jobs:
   build-library:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Checkout and setup environment
+        uses: MetaMask/action-checkout-and-setup@v1
+        with:
+          is-high-risk-environment: false
+          node-version: ${{ matrix.node-version }}
+          cache-node-modules: ${{ matrix.node-version == '22.x' }}
 
       - name: Build package
         run: yarn prepare
@@ -55,11 +58,12 @@ jobs:
     env:
       TURBO_CACHE_DIR: .turbo/android
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Checkout and setup environment
+        uses: MetaMask/action-checkout-and-setup@v1
+        with:
+          is-high-risk-environment: false
+          node-version: ${{ matrix.node-version }}
+          cache-node-modules: ${{ matrix.node-version == '22.x' }}
 
       - name: Cache turborepo for Android
         uses: actions/cache@v4
@@ -72,8 +76,6 @@ jobs:
       - name: Check turborepo cache for Android
         run: |
           JSON_OUTPUT=$(yarn turbo run  build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry-run=json)
-
-        
           # Use node -p to parse the JSON *string* and extract the status
           # Note the use of JSON.parse() and backticks (`) for the string literal
           TURBO_CACHE_STATUS=$(echo "$JSON_OUTPUT" | jq -r '.tasks[] | select(.task == "build:android") | .cache.status // "MISS"')
@@ -116,11 +118,12 @@ jobs:
     env:
       TURBO_CACHE_DIR: .turbo/ios
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Checkout and setup environment
+        uses: MetaMask/action-checkout-and-setup@v1
+        with:
+          is-high-risk-environment: false
+          node-version: ${{ matrix.node-version }}
+          cache-node-modules: ${{ matrix.node-version == '22.x' }}
 
       - name: Cache turborepo for iOS
         uses: actions/cache@v4
