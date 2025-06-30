@@ -1,5 +1,13 @@
 {
   "ignores": [
+    "@commitlint/config-conventional",
+    "@evilmartians/lefthook",
+    "@react-native-community/cli",
+    "@react-native/eslint-config",
+    "@release-it/conventional-changelog",
+    "@typescript-eslint/eslint-plugin",
+    "commitlint",
+    "turbo",
     "@lavamoat/allow-scripts",
     "@lavamoat/preinstall-always-fail",
     "@metamask/auto-changelog",
