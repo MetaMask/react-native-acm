@@ -11,4 +11,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release ([#8](https://github.com/MetaMask/react-native-acm/pull/8))
 
-[Unreleased]: git+https://github.com/MetaMask/react-native-acm.git
+[Unreleased]: git+https://github.com/MetaMask/react-native-acm/
