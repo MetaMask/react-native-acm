@@ -164,6 +164,12 @@
   "packageManager": "yarn@4.9.2",
   "depcheck": {
     "ignores": [
+      "@lavamoat/allow-scripts",
+      "@types/jest",
+      "eslint-plugin-ft-flow",
+      "eslint-plugin-jest",
+      "eslint-plugin-react-hooks",
+      "eslint-plugin-react-native",
       "@commitlint/config-conventional",
       "@evilmartians/lefthook",
       "@react-native-community/cli",
