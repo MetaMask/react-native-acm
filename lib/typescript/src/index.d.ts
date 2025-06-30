@@ -1,3 +1,10 @@
+declare enum ACM_ERROR_CODE {
+    NOT_SUPPORTED_ON_IOS = 1
+}
+export declare class ACM_ERROR extends Error {
+    code: ACM_ERROR_CODE;
+    constructor(code: ACM_ERROR_CODE, message?: string);
+}
 export type GoogleSignInParams = {
     nonce?: string;
     serverClientId: string;
@@ -16,4 +23,5 @@ export type GoogleCredential = {
 };
 export declare function signInWithGoogle(params: GoogleSignInParams): Promise<GoogleCredential>;
 export declare function signOut(): Promise<void>;
+export {};
 //# sourceMappingURL=index.d.ts.map
