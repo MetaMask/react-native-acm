@@ -93,7 +93,7 @@ jobs:
           TURBO_CACHE_STATUS=$(echo "$JSON_OUTPUT" | jq -r ".tasks[] | select(.task == \"build:android\") | .cache.status // \"MISS\"")
 
           if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
-            echo "turbo_cache_hit=1" >> $GITHUB_ENV
+            echo "turbo_cache_hit=1" >> "$GITHUB_ENV"
           fi
 
       - name: Install JDK
@@ -158,7 +158,7 @@ jobs:
           TURBO_CACHE_STATUS=$(echo "$JSON_OUTPUT" | jq -r ".tasks[] | select(.task == \"build:ios\") | .cache.status // \"MISS\"")
 
           if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
-            echo "turbo_cache_hit=1" >> $GITHUB_ENV
+            echo "turbo_cache_hit=1" >> "$GITHUB_ENV"
           fi
 
       - name: Restore cocoapods
