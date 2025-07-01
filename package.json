@@ -32,6 +32,7 @@
     "!**/.*"
   ],
   "scripts": {
+    "build:docs": "typedoc",
     "lint:changelog": "auto-changelog validate --prettier",
     "lint:constraints": "yarn constraints",
     "lint:dependencies": "depcheck && yarn dedupe",
@@ -94,6 +95,7 @@
     "react-native-builder-bob": "^0.38.4",
     "release-it": "^17.10.0",
     "turbo": "^1.10.7",
+    "typedoc": "^0.28.7",
     "typescript": "^5.2.2"
   },
   "peerDependencies": {
