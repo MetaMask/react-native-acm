@@ -13,12 +13,16 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Checkout and setup environment
+        uses: MetaMask/action-checkout-and-setup@v1
+        with:
+          is-high-risk-environment: false
+          node-version: ${{ matrix.node-version }}
+          cache-node-modules: ${{ matrix.node-version == '22.x' }}
 
       - name: Lint files
         run: yarn lint
@@ -28,38 +32,50 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Checkout and setup environment
+        uses: MetaMask/action-checkout-and-setup@v1
+        with:
+          is-high-risk-environment: false
+          node-version: ${{ matrix.node-version }}
+          cache-node-modules: ${{ matrix.node-version == '22.x' }}
 
       - name: Run unit tests
         run: yarn test --maxWorkers=2 --coverage
 
   build-library:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Checkout and setup environment
+        uses: MetaMask/action-checkout-and-setup@v1
+        with:
+          is-high-risk-environment: false
+          node-version: ${{ matrix.node-version }}
+          cache-node-modules: ${{ matrix.node-version == '22.x' }}
 
       - name: Build package
         run: yarn prepare
 
   build-android:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x]
     env:
       TURBO_CACHE_DIR: .turbo/android
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Checkout and setup environment
+        uses: MetaMask/action-checkout-and-setup@v1
+        with:
+          is-high-risk-environment: false
+          node-version: ${{ matrix.node-version }}
+          cache-node-modules: ${{ matrix.node-version == '22.x' }}
 
       - name: Cache turborepo for Android
         uses: actions/cache@v4
@@ -71,17 +87,13 @@ jobs:
 
       - name: Check turborepo cache for Android
         run: |
-          # Execute yarn command and capture JSON output into a shell variable
-          JSON_OUTPUT=$(yarn --silent turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)
-
+          JSON_OUTPUT=$(yarn turbo run  build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry-run=json)
           # Use node -p to parse the JSON *string* and extract the status
           # Note the use of JSON.parse() and backticks (`) for the string literal
-          TURBO_CACHE_STATUS=$(node -p "JSON.parse(\`$JSON_OUTPUT\`).tasks.find(t => t.task === 'build:android').cache.status")
-
-          # TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:android').cache.status")
+          TURBO_CACHE_STATUS=$(echo "$JSON_OUTPUT" | jq -r ".tasks[] | select(.task == \"build:android\") | .cache.status // \"MISS\"")
 
           if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
-            echo "turbo_cache_hit=1" >> $GITHUB_ENV
+            echo "turbo_cache_hit=1" >> "$GITHUB_ENV"
           fi
 
       - name: Install JDK
@@ -115,14 +127,18 @@ jobs:
 
   build-ios:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        node-version: [22.x]
     env:
       TURBO_CACHE_DIR: .turbo/ios
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Checkout and setup environment
+        uses: MetaMask/action-checkout-and-setup@v1
+        with:
+          is-high-risk-environment: false
+          node-version: ${{ matrix.node-version }}
+          cache-node-modules: ${{ matrix.node-version == '22.x' }}
 
       - name: Cache turborepo for iOS
         uses: actions/cache@v4
@@ -135,16 +151,14 @@ jobs:
       - name: Check turborepo cache for iOS
         run: |
           # Execute yarn command and capture JSON output into a shell variable
-          JSON_OUTPUT=$(yarn --silent turbo run  build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)
+          JSON_OUTPUT=$(yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry-run=json)
 
           # Use node -p to parse the JSON *string* and extract the status
           # Note the use of JSON.parse() and backticks (`) for the string literal
-          TURBO_CACHE_STATUS=$(node -p "JSON.parse(\`$JSON_OUTPUT\`).tasks.find(t => t.task === 'build:ios').cache.status")
-
-          # TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:ios').cache.status")
+          TURBO_CACHE_STATUS=$(echo "$JSON_OUTPUT" | jq -r ".tasks[] | select(.task == \"build:ios\") | .cache.status // \"MISS\"")
 
           if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
-            echo "turbo_cache_hit=1" >> $GITHUB_ENV
+            echo "turbo_cache_hit=1" >> "$GITHUB_ENV"
           fi
 
       - name: Restore cocoapods
