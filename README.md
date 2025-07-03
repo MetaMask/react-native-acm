@@ -16,7 +16,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Button
-        title="Sign In"
+        title="Sign In With Google"
         onPress={() =>
           signInWithGoogle({
             nonce: '12313123123',
