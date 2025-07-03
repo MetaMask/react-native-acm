@@ -8,9 +8,8 @@ Coming soon.
 
 ## Usage
 
-
 ```js
-import { signInWithGoogle } from '@metamask/....';
+import { signInWithGoogle } from '@metamask/react-native-acm';
 
 // ...
 export default function App() {
@@ -39,7 +38,6 @@ export default function App() {
   );
 }
 ```
-
 
 ## Contributing
 
