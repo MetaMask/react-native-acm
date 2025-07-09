@@ -4,7 +4,9 @@ Google ACM for react-native
 
 ## Installation
 
-Coming soon.
+```sh
+npm install @metamask/react-native-acm
+```
 
 ## Usage
 
