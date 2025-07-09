@@ -8,6 +8,12 @@ Google ACM for react-native
 npm install @metamask/react-native-acm
 ```
 
+or
+
+```sh
+yarn add @metamask/react-native-acm
+```
+
 ## Usage
 
 ```js
