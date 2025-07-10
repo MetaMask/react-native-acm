@@ -7,8 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0]
+
 ### Uncategorized
 
+- fix: update readme ([#13](https://github.com/MetaMask/react-native-acm/pull/13))
+- feat: update readme ([#12](https://github.com/MetaMask/react-native-acm/pull/12))
+- Feat/update_readme ([#11](https://github.com/MetaMask/react-native-acm/pull/11))
+- fix: update README ([#10](https://github.com/MetaMask/react-native-acm/pull/10))
+- feat: add yarn build:docs ([#9](https://github.com/MetaMask/react-native-acm/pull/9))
+- Feat/acm error code ([#7](https://github.com/MetaMask/react-native-acm/pull/7))
+- feat: support rn 0.76 ([#5](https://github.com/MetaMask/react-native-acm/pull/5))
+- Update README.md ([#6](https://github.com/MetaMask/react-native-acm/pull/6))
+- Feat/mm mobile ([#4](https://github.com/MetaMask/react-native-acm/pull/4))
+- feat: google SignIn android works
+- chore: initial commit
 - Initial release ([#8](https://github.com/MetaMask/react-native-acm/pull/8))
 
-[Unreleased]: https://github.com/MetaMask/react-native-acm/
+[Unreleased]: https://github.com/MetaMask/react-native-acm/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/MetaMask/react-native-acm/releases/tag/v1.0.0
