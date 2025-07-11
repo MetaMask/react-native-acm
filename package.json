@@ -1,6 +1,6 @@
 {
   "name": "@metamask/react-native-acm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Google ACM for react-native",
   "source": "./src/index.tsx",
   "main": "./lib/module/index.js",
