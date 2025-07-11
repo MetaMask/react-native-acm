@@ -62,6 +62,7 @@
   },
   "homepage": "https://github.com/MetaMask/react-native-acm#readme",
   "publishConfig": {
+    "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
