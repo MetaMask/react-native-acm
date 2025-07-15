@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2]
+
+### Uncategorized
+
+- feat: add scripts from metamask template ([#17](https://github.com/MetaMask/react-native-acm/pull/17))
+
 ## [1.0.1]
 
 ### Uncategorized
@@ -30,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: initial commit
 - Initial release ([#8](https://github.com/MetaMask/react-native-acm/pull/8))
 
-[Unreleased]: https://github.com/MetaMask/react-native-acm/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/MetaMask/react-native-acm/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/MetaMask/react-native-acm/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/MetaMask/react-native-acm/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/MetaMask/react-native-acm/releases/tag/v1.0.0
