@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 import android.content.Intent
 import android.util.Log
@@ -42,7 +43,9 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
 
   private val coroutineScope = CoroutineScope(Dispatchers.IO)
   private val LEGACY_SIGN_IN_REQUEST_CODE = 9001
+  @Volatile
   private var legacySignInDeferred: CompletableDeferred<ReadableMap?>? = null
+  private val legacySignInLock = Any()
 
   init {
     reactContext.addActivityEventListener(this)
@@ -156,10 +159,15 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
     } catch (_: Exception) { }
 
     val deferred = CompletableDeferred<ReadableMap?>()
-    legacySignInDeferred = deferred
+    synchronized(legacySignInLock) {
+      legacySignInDeferred?.complete(null)
+      legacySignInDeferred = deferred
+    }
 
-    val signInIntent = client.signInIntent
-    activity.startActivityForResult(signInIntent, LEGACY_SIGN_IN_REQUEST_CODE)
+    withContext(Dispatchers.Main) {
+      val signInIntent = client.signInIntent
+      activity.startActivityForResult(signInIntent, LEGACY_SIGN_IN_REQUEST_CODE)
+    }
 
     return deferred.await()
   }
@@ -168,8 +176,10 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
     if (requestCode != LEGACY_SIGN_IN_REQUEST_CODE) return
 
     val result = handleLegacySignInResult(resultCode, data)
-    legacySignInDeferred?.complete(result)
-    legacySignInDeferred = null
+    synchronized(legacySignInLock) {
+      legacySignInDeferred?.complete(result)
+      legacySignInDeferred = null
+    }
   }
 
   override fun onNewIntent(intent: Intent?) { }
