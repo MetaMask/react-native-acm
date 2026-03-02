@@ -4,48 +4,49 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.Promise
+import com.facebook.react.bridge.ActivityEventListener
 
-import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.Arguments
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 
+import android.content.Intent
 import android.util.Log
 import android.app.Activity
 import androidx.credentials.CredentialManager
 
 import androidx.credentials.ClearCredentialStateRequest
-import androidx.credentials.CreatePasswordRequest
-import androidx.credentials.CreatePublicKeyCredentialRequest
-import androidx.credentials.CreatePublicKeyCredentialResponse
-import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.GetCredentialResponse
-import androidx.credentials.GetPasswordOption
-import androidx.credentials.GetPublicKeyCredentialOption
-import androidx.credentials.PasswordCredential
-import androidx.credentials.PublicKeyCredential
 
-import androidx.credentials.exceptions.ClearCredentialException
-import androidx.credentials.exceptions.CreateCredentialException
 import androidx.credentials.exceptions.GetCredentialException
-import androidx.credentials.exceptions.NoCredentialException
 
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 
-import org.json.JSONObject
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+
+import kotlin.coroutines.resume
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 
 class GoogleAcmModule(reactContext: ReactApplicationContext) :
-  ReactContextBaseJavaModule(reactContext) {
+  ReactContextBaseJavaModule(reactContext), ActivityEventListener {
 
   private val coroutineScope = CoroutineScope(Dispatchers.IO)
+  private val LEGACY_SIGN_IN_REQUEST_CODE = 9001
+  private var legacySignInDeferred: CompletableDeferred<ReadableMap?>? = null
+
+  init {
+    reactContext.addActivityEventListener(this)
+  }
 
   override fun getName(): String {
     return NAME
@@ -56,16 +57,13 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
     requestObject: ReadableMap,
     promise: Promise
   ) {
-
     val activity: Activity? = currentActivity
     if (activity == null) {
-        promise.reject("E_NO_ACTIVITY", "Current activity is null, cannot launch UI.")
-        return
+      promise.reject("E_NO_ACTIVITY", "Current activity is null, cannot launch UI.")
+      return
     }
 
-    // Create an instance of CredentialManager with an Activity-based context.
     val credentialManager = CredentialManager.create(activity)
-
 
     val nonce = requestObject.getString("nonce") ?: ""
     val serverClientId = requestObject.getString("serverClientId") ?: ""
@@ -95,47 +93,130 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
             context = activity,
           )
 
-
         val data = handleSignInResult(result)
-        promise.resolve(data)
+        if (data != null) {
+          promise.resolve(data)
+        } else {
+          promise.reject("ERROR", "Failed to parse credential response")
+        }
       } catch (e: GetCredentialException) {
-        // ErrorHandler.handleGetCredentialError(e)
-        Log.e("CredentialManager", "Error during sign in", e)
-        promise.reject("ERROR", "e1 error $e")
+        Log.w("GoogleAcm", "Credential Manager failed, falling back to legacy sign-in", e)
+        try {
+          val data = tryLegacySignIn(serverClientId)
+          if (data != null) {
+            promise.resolve(data)
+          } else {
+            promise.reject("ERROR", "Legacy sign-in returned no credential")
+          }
+        } catch (legacyError: Exception) {
+          Log.e("GoogleAcm", "Legacy sign-in also failed", legacyError)
+          promise.reject(
+            "ERROR",
+            "Credential Manager failed: ${e.message}; Legacy fallback also failed: ${legacyError.message}"
+          )
+        }
+      } catch (e: Exception) {
+        Log.e("GoogleAcm", "Unexpected error during sign-in", e)
+        try {
+          val data = tryLegacySignIn(serverClientId)
+          if (data != null) {
+            promise.resolve(data)
+          } else {
+            promise.reject("ERROR", "Sign-in failed and legacy fallback returned no credential")
+          }
+        } catch (legacyError: Exception) {
+          Log.e("GoogleAcm", "Legacy sign-in also failed", legacyError)
+          promise.reject("ERROR", "Sign-in failed: ${e.message}; Legacy fallback also failed: ${legacyError.message}")
+        }
       }
     }
   }
 
-  @ReactMethod
-  fun signOut(
-    promise: Promise
-  ) {
-    coroutineScope.launch {
-      try {
-        handleSignOut()
-      } catch (e: GetCredentialException) {
+  private suspend fun tryLegacySignIn(serverClientId: String): ReadableMap? {
+    val activity = currentActivity
+      ?: throw Exception("No activity available for legacy sign-in")
 
-        // ErrorHandler.handleGetCredentialError(e)
-        Log.e("CredentialManager", "Error during sign in", e)
-        promise.reject("ERROR", "e1 error $e.message.toString()")
+    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+      .requestIdToken(serverClientId)
+      .requestEmail()
+      .build()
+
+    val client = GoogleSignIn.getClient(activity, gso)
+
+    try {
+      suspendCancellableCoroutine<Unit> { cont ->
+        client.revokeAccess().addOnCompleteListener { cont.resume(Unit) }
       }
+    } catch (_: Exception) { }
+
+    try {
+      suspendCancellableCoroutine<Unit> { cont ->
+        client.signOut().addOnCompleteListener { cont.resume(Unit) }
+      }
+    } catch (_: Exception) { }
+
+    val deferred = CompletableDeferred<ReadableMap?>()
+    legacySignInDeferred = deferred
+
+    val signInIntent = client.signInIntent
+    activity.startActivityForResult(signInIntent, LEGACY_SIGN_IN_REQUEST_CODE)
+
+    return deferred.await()
+  }
+
+  override fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
+    if (requestCode != LEGACY_SIGN_IN_REQUEST_CODE) return
+
+    val result = handleLegacySignInResult(resultCode, data)
+    legacySignInDeferred?.complete(result)
+    legacySignInDeferred = null
+  }
+
+  override fun onNewIntent(intent: Intent?) { }
+
+  private fun handleLegacySignInResult(resultCode: Int, data: Intent?): ReadableMap? {
+    if (resultCode != Activity.RESULT_OK) {
+      Log.w("GoogleAcm", "Legacy sign-in cancelled or failed, resultCode=$resultCode")
+      return null
+    }
+
+    return try {
+      val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+      val account = task.getResult(ApiException::class.java)
+      val idToken = account?.idToken
+
+      if (idToken != null) {
+        Arguments.createMap().apply {
+          putString("type", "google-signin")
+          putString("id", account.id ?: "")
+          putString("idToken", idToken)
+          account.displayName?.let { putString("displayName", it) }
+          account.familyName?.let { putString("familyName", it) }
+          account.givenName?.let { putString("givenName", it) }
+          account.photoUrl?.let { putString("profilePicture", it.toString()) }
+        }
+      } else {
+        Log.e("GoogleAcm", "Legacy sign-in returned null idToken")
+        null
+      }
+    } catch (e: ApiException) {
+      Log.e("GoogleAcm", "Legacy sign-in ApiException: statusCode=${e.statusCode}", e)
+      null
     }
   }
 
-  fun handleSignInResult(result: GetCredentialResponse): ReadableMap? {
-    // Handle the successfully returned credential.
+  fun handleSignInResult(result: androidx.credentials.GetCredentialResponse): ReadableMap? {
     val credential = result.credential
-    Log.d("CredentialManager", "Handle results called")
+    Log.d("GoogleAcm", "Handle results called")
 
     return when (credential) {
-      // GoogleIdToken credential
       is CustomCredential -> {
         if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
           try {
             val googleIdTokenCredential =
               GoogleIdTokenCredential
                 .createFrom(credential.data)
-            Log.d("CredentialManager", "Google ID Token Credential ID: ${googleIdTokenCredential.id}")
+            Log.d("GoogleAcm", "Google ID Token Credential ID: ${googleIdTokenCredential.id}")
 
             return Arguments.createMap().apply {
               putString("type", "google-signin")
@@ -148,19 +229,33 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
               googleIdTokenCredential.phoneNumber?.let { putString("phoneNumber", it) }
             }
           } catch (e: GoogleIdTokenParsingException) {
-            Log.e("CredentialManager", "Received an invalid google id token response", e)
+            Log.e("GoogleAcm", "Received an invalid google id token response", e)
             return null
           }
         } else {
-          Log.e("CredentialManager", "Received an unexpected credential type")
+          Log.e("GoogleAcm", "Received an unexpected credential type")
           return null
         }
       }
 
       else -> {
-        // Catch any unrecognized credential type here.
-        Log.e("CredentialManager", "Unexpected type of credential")
+        Log.e("GoogleAcm", "Unexpected type of credential")
         return null
+      }
+    }
+  }
+
+  @ReactMethod
+  fun signOut(
+    promise: Promise
+  ) {
+    coroutineScope.launch {
+      try {
+        handleSignOut()
+        promise.resolve(null)
+      } catch (e: Exception) {
+        Log.e("GoogleAcm", "Error during sign out", e)
+        promise.reject("ERROR", "Sign out failed: ${e.message}")
       }
     }
   }
@@ -168,17 +263,21 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
   suspend fun handleSignOut() {
     val activity: Activity? = currentActivity
     if (activity == null) {
-      throw Exception()
-      //promise.reject("E_NO_ACTIVITY", "Current activity is null, cannot launch UI.")
-      return
+      throw Exception("Current activity is null, cannot sign out.")
     }
 
-    // Create an instance of CredentialManager with an Activity-based context.
     val credentialManager = CredentialManager.create(activity)
-
     credentialManager.clearCredentialState(ClearCredentialStateRequest())
+    try {
+      val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
+      val client = GoogleSignIn.getClient(activity, gso)
+      suspendCancellableCoroutine<Unit> { cont ->
+        client.signOut().addOnCompleteListener { cont.resume(Unit) }
+      }
+    } catch (e: Exception) {
+      Log.w("GoogleAcm", "Failed to clear legacy sign-in state", e)
+    }
   }
-
 
   companion object {
     const val NAME = "GoogleAcm"
