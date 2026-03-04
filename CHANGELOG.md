@@ -9,10 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0]
 
-### Uncategorized
+### Added
 
-- Revert "chore: bump version to 1.0.3 and update changelog" ([#31](https://github.com/MetaMask/react-native-acm/pull/31))
-- Revert "1.0.4" ([#30](https://github.com/MetaMask/react-native-acm/pull/30))
+- Legacy Google Sign-In fallback for older Android devices (API < 28) ([#27](https://github.com/MetaMask/react-native-acm/pull/27))
 
 ## [1.0.2]
 
