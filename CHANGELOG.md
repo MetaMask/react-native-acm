@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4]
+
+### Uncategorized
+
+- chore: bump version to 1.0.3 and update changelog ([#28](https://github.com/MetaMask/react-native-acm/pull/28))
+
 ## [1.0.3]
 
 ### Added
@@ -42,7 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: initial commit
 - Initial release ([#8](https://github.com/MetaMask/react-native-acm/pull/8))
 
-[Unreleased]: https://github.com/MetaMask/react-native-acm/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/MetaMask/react-native-acm/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/MetaMask/react-native-acm/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/MetaMask/react-native-acm/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/MetaMask/react-native-acm/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/MetaMask/react-native-acm/compare/v1.0.0...v1.0.1
