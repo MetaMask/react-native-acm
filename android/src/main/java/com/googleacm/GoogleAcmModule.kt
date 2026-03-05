@@ -13,9 +13,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 import android.app.Activity
 import androidx.credentials.CredentialManager
@@ -30,6 +32,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 
+import com.google.android.gms.auth.GoogleAuthUtil
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -46,6 +49,8 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
   @Volatile
   private var legacySignInDeferred: CompletableDeferred<ReadableMap?>? = null
   private val legacySignInLock = Any()
+  @Volatile
+  private var lastLegacyIdToken: String? = null
 
   init {
     reactContext.addActivityEventListener(this)
@@ -147,6 +152,13 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
     val client = GoogleSignIn.getClient(activity, gso)
 
     try {
+      lastLegacyIdToken?.let {
+        GoogleAuthUtil.clearToken(reactApplicationContext, it)
+        lastLegacyIdToken = null
+      }
+    } catch (_: Exception) { }
+
+    try {
       suspendCancellableCoroutine<Unit> { cont ->
         client.revokeAccess().addOnCompleteListener { cont.resume(Unit) }
       }
@@ -157,6 +169,8 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
         client.signOut().addOnCompleteListener { cont.resume(Unit) }
       }
     } catch (_: Exception) { }
+
+    delay(300)
 
     val deferred = CompletableDeferred<ReadableMap?>()
     synchronized(legacySignInLock) {
@@ -196,6 +210,7 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       val idToken = account?.idToken
 
       if (idToken != null) {
+        lastLegacyIdToken = idToken
         Arguments.createMap().apply {
           putString("type", "google-signin")
           putString("id", account.id ?: "")
@@ -276,8 +291,26 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       throw Exception("Current activity is null, cannot sign out.")
     }
 
-    val credentialManager = CredentialManager.create(activity)
-    credentialManager.clearCredentialState(ClearCredentialStateRequest())
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      try {
+        val credentialManager = CredentialManager.create(activity)
+        credentialManager.clearCredentialState(ClearCredentialStateRequest())
+      } catch (e: Throwable) {
+        Log.w("GoogleAcm", "clearCredentialState failed, will clear legacy sign-in state", e)
+      }
+    } else {
+      Log.d("GoogleAcm", "Skipping clearCredentialState on API ${Build.VERSION.SDK_INT}, using legacy sign-out only")
+    }
+
+    try {
+      lastLegacyIdToken?.let {
+        GoogleAuthUtil.clearToken(reactApplicationContext, it)
+      }
+    } catch (e: Exception) {
+      Log.w("GoogleAcm", "Failed to clear cached token", e)
+    }
+    lastLegacyIdToken = null
+
     try {
       val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
       val client = GoogleSignIn.getClient(activity, gso)
