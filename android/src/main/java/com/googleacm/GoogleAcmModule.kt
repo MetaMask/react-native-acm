@@ -13,9 +13,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 import android.app.Activity
 import androidx.credentials.CredentialManager
@@ -105,7 +107,7 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       } catch (e: GetCredentialException) {
         Log.w("GoogleAcm", "Credential Manager failed, falling back to legacy sign-in", e)
         try {
-          val data = tryLegacySignIn(serverClientId)
+          val data = tryLegacySignIn(serverClientId, nonce)
           if (data != null) {
             promise.resolve(data)
           } else {
@@ -121,7 +123,7 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       } catch (e: Exception) {
         Log.e("GoogleAcm", "Unexpected error during sign-in", e)
         try {
-          val data = tryLegacySignIn(serverClientId)
+          val data = tryLegacySignIn(serverClientId, nonce)
           if (data != null) {
             promise.resolve(data)
           } else {
@@ -135,7 +137,7 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
     }
   }
 
-  private suspend fun tryLegacySignIn(serverClientId: String): ReadableMap? {
+  private suspend fun tryLegacySignIn(serverClientId: String, nonce: String = ""): ReadableMap? {
     val activity = currentActivity
       ?: throw Exception("No activity available for legacy sign-in")
 
@@ -157,6 +159,8 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
         client.signOut().addOnCompleteListener { cont.resume(Unit) }
       }
     } catch (_: Exception) { }
+
+    delay(300)
 
     val deferred = CompletableDeferred<ReadableMap?>()
     synchronized(legacySignInLock) {
@@ -276,8 +280,17 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       throw Exception("Current activity is null, cannot sign out.")
     }
 
-    val credentialManager = CredentialManager.create(activity)
-    credentialManager.clearCredentialState(ClearCredentialStateRequest())
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      try {
+        val credentialManager = CredentialManager.create(activity)
+        credentialManager.clearCredentialState(ClearCredentialStateRequest())
+      } catch (e: Throwable) {
+        Log.w("GoogleAcm", "clearCredentialState failed, will clear legacy sign-in state", e)
+      }
+    } else {
+      Log.d("GoogleAcm", "Skipping clearCredentialState on API ${Build.VERSION.SDK_INT}, using legacy sign-out only")
+    }
+
     try {
       val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
       val client = GoogleSignIn.getClient(activity, gso)
