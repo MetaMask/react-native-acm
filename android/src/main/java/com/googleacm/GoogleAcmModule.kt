@@ -303,6 +303,15 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
     }
 
     try {
+      lastLegacyIdToken?.let {
+        GoogleAuthUtil.clearToken(reactApplicationContext, it)
+      }
+    } catch (e: Exception) {
+      Log.w("GoogleAcm", "Failed to clear cached token", e)
+    }
+    lastLegacyIdToken = null
+
+    try {
       val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
       val client = GoogleSignIn.getClient(activity, gso)
       suspendCancellableCoroutine<Unit> { cont ->
