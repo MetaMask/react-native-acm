@@ -32,6 +32,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 
+import com.google.android.gms.auth.GoogleAuthUtil
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -48,6 +49,8 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
   @Volatile
   private var legacySignInDeferred: CompletableDeferred<ReadableMap?>? = null
   private val legacySignInLock = Any()
+  @Volatile
+  private var lastLegacyIdToken: String? = null
 
   init {
     reactContext.addActivityEventListener(this)
@@ -107,7 +110,7 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       } catch (e: GetCredentialException) {
         Log.w("GoogleAcm", "Credential Manager failed, falling back to legacy sign-in", e)
         try {
-          val data = tryLegacySignIn(serverClientId, nonce)
+          val data = tryLegacySignIn(serverClientId)
           if (data != null) {
             promise.resolve(data)
           } else {
@@ -123,7 +126,7 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       } catch (e: Exception) {
         Log.e("GoogleAcm", "Unexpected error during sign-in", e)
         try {
-          val data = tryLegacySignIn(serverClientId, nonce)
+          val data = tryLegacySignIn(serverClientId)
           if (data != null) {
             promise.resolve(data)
           } else {
@@ -137,7 +140,7 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
     }
   }
 
-  private suspend fun tryLegacySignIn(serverClientId: String, nonce: String = ""): ReadableMap? {
+  private suspend fun tryLegacySignIn(serverClientId: String): ReadableMap? {
     val activity = currentActivity
       ?: throw Exception("No activity available for legacy sign-in")
 
@@ -147,6 +150,13 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       .build()
 
     val client = GoogleSignIn.getClient(activity, gso)
+
+    try {
+      lastLegacyIdToken?.let {
+        GoogleAuthUtil.clearToken(reactApplicationContext, it)
+        lastLegacyIdToken = null
+      }
+    } catch (_: Exception) { }
 
     try {
       suspendCancellableCoroutine<Unit> { cont ->
@@ -200,6 +210,7 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       val idToken = account?.idToken
 
       if (idToken != null) {
+        lastLegacyIdToken = idToken
         Arguments.createMap().apply {
           putString("type", "google-signin")
           putString("id", account.id ?: "")
