@@ -13,9 +13,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 import android.app.Activity
 import androidx.credentials.CredentialManager
@@ -23,13 +25,14 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 
-import androidx.credentials.exceptions.GetCredentialException
 
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 
+import com.google.android.gms.auth.GoogleAuthUtil
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -46,6 +49,8 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
   @Volatile
   private var legacySignInDeferred: CompletableDeferred<ReadableMap?>? = null
   private val legacySignInLock = Any()
+  @Volatile
+  private var lastLegacyIdToken: String? = null
 
   init {
     reactContext.addActivityEventListener(this)
@@ -102,7 +107,12 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
         } else {
           promise.reject("ERROR", "Failed to parse credential response")
         }
-      } catch (e: GetCredentialException) {
+      } catch (e: Exception) {
+        if (e is GetCredentialCancellationException) {
+          promise.reject("ERROR", "User cancelled")
+          return@launch
+        }
+
         Log.w("GoogleAcm", "Credential Manager failed, falling back to legacy sign-in", e)
         try {
           val data = tryLegacySignIn(serverClientId)
@@ -115,21 +125,8 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
           Log.e("GoogleAcm", "Legacy sign-in also failed", legacyError)
           promise.reject(
             "ERROR",
-            "Credential Manager failed: ${e.message}; Legacy fallback also failed: ${legacyError.message}"
+            "Sign-in failed: ${e.message}; Legacy fallback also failed: ${legacyError.message}"
           )
-        }
-      } catch (e: Exception) {
-        Log.e("GoogleAcm", "Unexpected error during sign-in", e)
-        try {
-          val data = tryLegacySignIn(serverClientId)
-          if (data != null) {
-            promise.resolve(data)
-          } else {
-            promise.reject("ERROR", "Sign-in failed and legacy fallback returned no credential")
-          }
-        } catch (legacyError: Exception) {
-          Log.e("GoogleAcm", "Legacy sign-in also failed", legacyError)
-          promise.reject("ERROR", "Sign-in failed: ${e.message}; Legacy fallback also failed: ${legacyError.message}")
         }
       }
     }
@@ -147,6 +144,13 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
     val client = GoogleSignIn.getClient(activity, gso)
 
     try {
+      lastLegacyIdToken?.let {
+        GoogleAuthUtil.clearToken(reactApplicationContext, it)
+        lastLegacyIdToken = null
+      }
+    } catch (_: Exception) { }
+
+    try {
       suspendCancellableCoroutine<Unit> { cont ->
         client.revokeAccess().addOnCompleteListener { cont.resume(Unit) }
       }
@@ -157,6 +161,8 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
         client.signOut().addOnCompleteListener { cont.resume(Unit) }
       }
     } catch (_: Exception) { }
+
+    delay(300)
 
     val deferred = CompletableDeferred<ReadableMap?>()
     synchronized(legacySignInLock) {
@@ -196,6 +202,7 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       val idToken = account?.idToken
 
       if (idToken != null) {
+        lastLegacyIdToken = idToken
         Arguments.createMap().apply {
           putString("type", "google-signin")
           putString("id", account.id ?: "")
@@ -276,16 +283,36 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
       throw Exception("Current activity is null, cannot sign out.")
     }
 
-    val credentialManager = CredentialManager.create(activity)
-    credentialManager.clearCredentialState(ClearCredentialStateRequest())
-    try {
-      val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
-      val client = GoogleSignIn.getClient(activity, gso)
-      suspendCancellableCoroutine<Unit> { cont ->
-        client.signOut().addOnCompleteListener { cont.resume(Unit) }
+    var credentialManagerSuccess = false
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      try {
+        val credentialManager = CredentialManager.create(activity)
+        credentialManager.clearCredentialState(ClearCredentialStateRequest())
+        credentialManagerSuccess = true
+      } catch (e: Throwable) {
+        Log.w("GoogleAcm", "clearCredentialState failed, falling back to legacy sign-out", e)
       }
-    } catch (e: Exception) {
-      Log.w("GoogleAcm", "Failed to clear legacy sign-in state", e)
+    }
+
+    if (!credentialManagerSuccess) {
+      try {
+        lastLegacyIdToken?.let {
+          GoogleAuthUtil.clearToken(reactApplicationContext, it)
+        }
+      } catch (e: Exception) {
+        Log.w("GoogleAcm", "Failed to clear cached token", e)
+      }
+      lastLegacyIdToken = null
+
+      try {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
+        val client = GoogleSignIn.getClient(activity, gso)
+        suspendCancellableCoroutine<Unit> { cont ->
+          client.signOut().addOnCompleteListener { cont.resume(Unit) }
+        }
+      } catch (e: Exception) {
+        Log.w("GoogleAcm", "Failed to clear legacy sign-in state", e)
+      }
     }
   }
 
