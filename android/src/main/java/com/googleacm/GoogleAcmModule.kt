@@ -25,6 +25,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 
 
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -107,6 +108,11 @@ class GoogleAcmModule(reactContext: ReactApplicationContext) :
           promise.reject("ERROR", "Failed to parse credential response")
         }
       } catch (e: Exception) {
+        if (e is GetCredentialCancellationException) {
+          promise.reject("ERROR", "User cancelled")
+          return@launch
+        }
+
         Log.w("GoogleAcm", "Credential Manager failed, falling back to legacy sign-in", e)
         try {
           val data = tryLegacySignIn(serverClientId)
