@@ -9,6 +9,7 @@ export default function App() {
         onPress={() =>
           signInWithGoogle({
             nonce: '12313123123',
+            iosClientId: '882363291751-vmf59hv8adhms87ld1di4jd11nk883pv.apps.googleusercontent.com',
             serverClientId:
               '882363291751-2a37cchrq9oc1lfj1p419otvahnbhguv.apps.googleusercontent.com',
             autoSelectEnabled: false,

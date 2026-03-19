@@ -1319,7 +1319,7 @@
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
 "@metamask/react-native-acm@file:..":
-  version "0.1.0"
+  version "1.2.0"
   resolved "file:.."
 
 "@nodelib/fs.scandir@2.1.5":
