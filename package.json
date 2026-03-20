@@ -18,6 +18,9 @@
     "android",
     "ios",
     "cpp",
+    "plugin/build",
+    "plugin/src",
+    "app.plugin.js",
     "*.podspec",
     "react-native.config.js",
     "!ios/build",
@@ -42,7 +45,8 @@
     "lint:eslint": "eslint \"**/*.{js,ts,tsx}\"",
     "lint": "yarn lint:eslint && yarn lint:changelog && yarn lint:constraints && yarn lint:dependencies",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
-    "prepare": "bob build",
+    "prepare": "bob build && tsc --project plugin/tsconfig.json",
+    "build:plugin": "tsc --project plugin/tsconfig.json",
     "build": "yarn prepare",
     "release": "release-it"
   },
@@ -71,6 +75,7 @@
     "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.22.0",
     "@evilmartians/lefthook": "^1.5.0",
+    "@expo/config-plugins": ">=7.0.0",
     "@lavamoat/allow-scripts": "^3.3.4",
     "@metamask/auto-changelog": "^5.0.2",
     "@react-native-community/cli": "^18.0.0",
@@ -100,8 +105,14 @@
     "typescript": "^5.2.2"
   },
   "peerDependencies": {
+    "expo": ">=47.0.0",
     "react": "*",
     "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "expo": {
+      "optional": true
+    }
   },
   "jest": {
     "preset": "react-native",
@@ -159,6 +170,7 @@
       ]
     ]
   },
+  "googleSignInVersion": "~> 9.0",
   "create-react-native-library": {
     "type": "legacy-module",
     "languages": "kotlin-swift",
